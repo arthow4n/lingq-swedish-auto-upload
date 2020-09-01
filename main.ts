@@ -168,7 +168,10 @@ const main = async () => {
 if (process.env.PORT) {
   http
     .createServer(async (req, res) => {
-      await main();
+      const shouldRunMain = req.url === "/";
+      if (shouldRunMain) {
+        await main();
+      }
       res.writeHead(200, { "Content-Type": "text/html" });
       res.write(
         `
@@ -177,10 +180,12 @@ if (process.env.PORT) {
   <head>
     <meta charset="utf-8">
     <title>lingq-swedish-auto-upload</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" type="image/png" href="https://placehold.co/512x512/000000/FFFFFF/png?text=sAu">
   </head>
   <body>
     <p>200 Hopefully it's okay</p>
+    <p>shouldRunMain: ${shouldRunMain}</p>
   </body>
 </html>
 `,
