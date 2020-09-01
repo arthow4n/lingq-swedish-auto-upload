@@ -169,8 +169,22 @@ if (process.env.PORT) {
   http
     .createServer(async (req, res) => {
       await main();
-      res.writeHead(200);
-      res.write("200 Hopefully it's okay.");
+      res.writeHead(200, { "Content-Type": "text/html" });
+      res.write(
+        `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>lingq-swedish-auto-upload</title>
+    <link rel="icon" type="image/png" href="https://placehold.co/512x512/000000/FFFFFF/png?text=sAu">
+  </head>
+  <body>
+    <p>200 Hopefully it's okay</p>
+  </body>
+</html>
+`,
+      );
       res.end();
     })
     .listen(parseInt(process.env.PORT, 10));
