@@ -1,3 +1,4 @@
+import http from "http";
 import got from "got";
 import cheerio from "cheerio";
 import { config as dotenv } from "dotenv";
@@ -123,6 +124,7 @@ const import8Sidor = async () => {
   const audioUrl = $("audio source").attr("src");
   if (!audioUrl) throw new Error();
 
+  // Ceiling is needed because LingQ API returns 400 for `duration` with fractions
   const duration = Math.ceil(await mp3Duration(await got(audioUrl).buffer()));
   const image = $("article img")
     .first()
@@ -157,9 +159,25 @@ const import8Sidor = async () => {
   await lingq("/sv/lessons/", createLessonRequest);
 };
 
-(async () => {
+const main = async () => {
   await import8Sidor();
   for (const episode of await srEasySwedishEpisodes()) {
     await importRelatedNews(episode);
   }
-})();
+};
+
+// For deploying to Heroku
+if (process.env.PORT) {
+  http
+    .createServer(async (req, res) => {
+      await main();
+      res.writeHead(200);
+      res.write("200 Hopefully it's okay.");
+      res.end();
+    })
+    .listen(parseInt(process.env.PORT, 10));
+} else {
+  (async () => {
+    await main();
+  })();
+}
