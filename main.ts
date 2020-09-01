@@ -161,9 +161,7 @@ const import8Sidor = async () => {
 
 const main = async () => {
   await import8Sidor();
-  for (const episode of await srEasySwedishEpisodes()) {
-    await importRelatedNews(episode);
-  }
+  await importRelatedNews((await srEasySwedishEpisodes())[0]);
 };
 
 // For deploying to Heroku
