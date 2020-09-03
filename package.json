@@ -14,7 +14,8 @@
   },
   "devDependencies": {},
   "scripts": {
-    "start": "ts-node main.ts"
+    "start": "ts-node webhook.ts",
+    "crawl": "ts-node crawler.ts"
   },
   "author": {
     "name": "Sheng-han (Aysh) Su",

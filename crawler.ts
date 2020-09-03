@@ -159,42 +159,11 @@ const import8Sidor = async () => {
   await lingq("/sv/lessons/", createLessonRequest);
 };
 
-const main = async () => {
+export const crawl = async () => {
   await import8Sidor();
   await importRelatedNews((await srEasySwedishEpisodes())[0]);
 };
 
-// For deploying to Heroku
-if (process.env.PORT) {
-  http
-    .createServer(async (req, res) => {
-      const shouldRunMain = req.url === "/";
-      if (shouldRunMain) {
-        await main();
-      }
-      res.writeHead(200, { "Content-Type": "text/html" });
-      res.write(
-        `
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>lingq-swedish-auto-upload</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/png" href="https://placehold.co/512x512/000000/FFFFFF/png?text=sAu">
-  </head>
-  <body>
-    <p>200 Hopefully it's okay</p>
-    <p>shouldRunMain: ${shouldRunMain}</p>
-  </body>
-</html>
-`,
-      );
-      res.end();
-    })
-    .listen(parseInt(process.env.PORT, 10));
-} else {
-  (async () => {
-    await main();
-  })();
+if (require.main === module) {
+  crawl();
 }
