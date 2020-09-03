@@ -13,26 +13,22 @@ const env = { ...process.env } as {
   COURSE_PK_8SLYSS: string;
 };
 
-type SrNewsEpisode = {
-  title: string;
-  url: string;
-  imageurl: string;
-  downloadpodfile: {
-    url: string;
-    duration: number;
-  };
-};
-
-type LingqCreateLessonRequest = {
+type LingqCreateLessonRequestBase = {
   title: string;
   text: string;
   status: "private" | "shared";
   collection?: number;
   original_url?: string;
   external_image?: string;
-  external_audio?: string;
-  duration?: number;
 };
+
+type LingqCreateLessonRequestWithAudio = LingqCreateLessonRequestBase & {
+  external_audio: string;
+  duration: number;
+};
+type LingqCreateLessonRequest =
+  | LingqCreateLessonRequestBase
+  | LingqCreateLessonRequestWithAudio;
 
 async function lingq(path: "/sv/lessons/", postJson: LingqCreateLessonRequest) {
   const { body } = await got(`https://www.lingq.com/api/v2${path}`, {
@@ -43,14 +39,6 @@ async function lingq(path: "/sv/lessons/", postJson: LingqCreateLessonRequest) {
   });
   return body;
 }
-
-const srEasySwedishEpisodes = async () => {
-  const res = await got(
-    "https://api.sr.se/api/v2/episodes/index?programid=4916&format=json",
-  ).json();
-
-  return (res as { episodes: SrNewsEpisode[] })["episodes"] as SrNewsEpisode[];
-};
 
 const importSrArticle = async (url: string) => {
   console.log(`Parsing: ${url}`);
@@ -63,7 +51,7 @@ const importSrArticle = async (url: string) => {
   const image = $("main figure img")
     .first()
     .attr("src");
-  const audioId = new URL(url).searchParams.get("artikel");
+  const audioId = (new URL(url).pathname.match(/\/artikel\/(\d+)/) ?? [])[1];
   if (!audioId) throw new Error();
 
   const audioMetadataResponse = await got(
@@ -95,24 +83,22 @@ const importSrArticle = async (url: string) => {
   await lingq("/sv/lessons/", createLessonRequest);
 };
 
-const importRelatedNews = async (ep: SrNewsEpisode) => {
-  const { body } = await got(ep.url);
+const importSrEasySwedishArticles = async () => {
+  const { body } = await got(
+    "https://sverigesradio.se/radioswedenpalattsvenska",
+  );
   const $ = cheerio.load(body);
 
-  const relatedNewsInfoJson = $(
-    '[data-vue-component="publication-relations"]',
-  ).attr("data-json");
+  const articlePaths = $('div[role="main"] header a')
+    .toArray()
+    .map((el) => $(el).attr("href") || "");
 
-  if (!relatedNewsInfoJson) {
+  if (articlePaths.some((x) => !x)) {
     throw new Error();
   }
 
-  const relatedNewsUrls = (JSON.parse(relatedNewsInfoJson)["items"] as {
-    url: string;
-  }[]).map((x) => `https://sverigesradio.se/${x.url}`);
-
-  for (const url of relatedNewsUrls) {
-    await importSrArticle(url);
+  for (const path of articlePaths) {
+    await importSrArticle(`https://sverigesradio.se${path}`);
   }
 };
 
@@ -161,7 +147,7 @@ const import8Sidor = async () => {
 
 export const crawl = async () => {
   await import8Sidor();
-  await importRelatedNews((await srEasySwedishEpisodes())[0]);
+  await importSrEasySwedishArticles();
 };
 
 if (require.main === module) {
