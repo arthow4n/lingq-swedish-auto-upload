@@ -137,12 +137,12 @@ const import8Sidor = async () => {
     .toArray()
     .map((article) => {
       return $(article)
-        .find("h2, p:not(.bottom-link)")
+        .find("h2, p:not(.bottom-links)")
         .toArray()
         .map((textNode) => $(textNode).text())
         .join("\n\n");
     })
-    .join("======");
+    .join("\n\n======\n\n");
 
   const createLessonRequest: LingqCreateLessonRequest = {
     collection: parseInt(env.COURSE_PK_8SLYSS),
