@@ -34,7 +34,7 @@ type LingqCreateLessonRequest = {
   duration?: number;
 };
 
-const lingq = async (path: string, postJson?: Object) => {
+async function lingq(path: "/sv/lessons/", postJson: LingqCreateLessonRequest) {
   const { body } = await got(`https://www.lingq.com/api/v2${path}`, {
     headers: { Authorization: `Token ${env.LINGQ_API_KEY}` },
     responseType: "json",
@@ -42,7 +42,7 @@ const lingq = async (path: string, postJson?: Object) => {
     json: postJson,
   });
   return body;
-};
+}
 
 const srEasySwedishEpisodes = async () => {
   const res = await got(
