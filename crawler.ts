@@ -24,6 +24,7 @@ type LingqCreateLessonRequestBase = {
 
 type LingqCreateLessonRequestWithAudio = LingqCreateLessonRequestBase & {
   external_audio: string;
+  // Needs to be integer, because LingQ API returns 400 for `duration` with fractions.
   duration: number;
 };
 type LingqCreateLessonRequest =
@@ -31,12 +32,17 @@ type LingqCreateLessonRequest =
   | LingqCreateLessonRequestWithAudio;
 
 async function lingq(path: "/sv/lessons/", postJson: LingqCreateLessonRequest) {
+  if ("duration" in postJson) {
+    postJson.duration = Math.ceil(postJson.duration);
+  }
+
   const { body } = await got(`https://www.lingq.com/api/v2${path}`, {
     headers: { Authorization: `Token ${env.LINGQ_API_KEY}` },
     responseType: "json",
     method: postJson ? "POST" : "GET",
     json: postJson,
   });
+
   return body;
 }
 
@@ -109,8 +115,7 @@ const import8Sidor = async () => {
   const audioUrl = $("audio source").attr("src");
   if (!audioUrl) throw new Error();
 
-  // Ceiling is needed because LingQ API returns 400 for `duration` with fractions
-  const duration = Math.ceil(await mp3Duration(await got(audioUrl).buffer()));
+  const duration = await mp3Duration(await got(audioUrl).buffer());
   const image = $("article img").first().attr("src");
   const title = $(".blog-main article .date").first().text();
   const text = $(".blog-main article")

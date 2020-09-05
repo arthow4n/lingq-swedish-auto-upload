@@ -6,10 +6,17 @@ const port = parseInt(process.env.PORT || "3000", 10);
 http
   .createServer(async (req, res) => {
     const shouldRunCrawler = req.url === "/";
+    let success = true;
+
     if (shouldRunCrawler) {
-      await crawl();
+      try {
+        await crawl();
+      } catch {
+        success = false;
+      }
     }
-    res.writeHead(200, { "Content-Type": "text/html" });
+
+    res.writeHead(success ? 200 : 500, { "Content-Type": "text/html" });
     res.write(
       `
 <!DOCTYPE html>
@@ -21,7 +28,7 @@ http
     <link rel="icon" type="image/png" href="https://placehold.co/512x512/000000/FFFFFF/png?text=sAu">
   </head>
   <body>
-    <p>200 Hopefully it's okay</p>
+    <p>${success ? "200 Hopefully it's okay" : "500 Oh shit"}</p>
     <p>shouldRunMain: ${shouldRunCrawler}</p>
   </body>
 </html>
