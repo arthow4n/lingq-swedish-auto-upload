@@ -86,6 +86,7 @@ const importSrArticle = async (url: string) => {
 };
 
 const importSrEasySwedishArticles = async () => {
+  console.log("Checking articles list: Radio Sweden på lätt svenska");
   const { body } = await got(
     "https://sverigesradio.se/radioswedenpalattsvenska",
   );
@@ -102,7 +103,9 @@ const importSrEasySwedishArticles = async () => {
   // For importing the oldest article first
   articlePaths.reverse();
 
-  for (const path of articlePaths) {
+  for (let i = 0; i < articlePaths.length; i++) {
+    console.log(`Importing: ${i + 1}/${articlePaths.length}`);
+    const path = articlePaths[i];
     await importSrArticle(`https://sverigesradio.se${path}`);
   }
 };
@@ -114,7 +117,10 @@ const import8Sidor = async () => {
 
   const audioUrl = $("audio source").attr("src");
   // This is empty during weekend
-  if (!audioUrl) return;
+  if (!audioUrl) {
+    console.log("No content today");
+    return;
+  }
 
   const duration = await mp3Duration(await got(audioUrl).buffer());
   const image = $("article img").first().attr("src");
