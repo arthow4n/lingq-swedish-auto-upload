@@ -45,12 +45,8 @@ const importSrArticle = async (url: string) => {
   const { body } = await got(url);
   const $ = cheerio.load(body);
 
-  const title = $("main .audio-heading__title h1")
-    .first()
-    .text();
-  const image = $("main figure img")
-    .first()
-    .attr("src");
+  const title = $("main .audio-heading__title h1").first().text();
+  const image = $("main figure img").first().attr("src");
   const audioId = (new URL(url).pathname.match(/\/artikel\/(\d+)/) ?? [])[1];
   if (!audioId) throw new Error();
 
@@ -97,6 +93,9 @@ const importSrEasySwedishArticles = async () => {
     throw new Error();
   }
 
+  // For importing the oldest article first
+  articlePaths.reverse();
+
   for (const path of articlePaths) {
     await importSrArticle(`https://sverigesradio.se${path}`);
   }
@@ -112,13 +111,8 @@ const import8Sidor = async () => {
 
   // Ceiling is needed because LingQ API returns 400 for `duration` with fractions
   const duration = Math.ceil(await mp3Duration(await got(audioUrl).buffer()));
-  const image = $("article img")
-    .first()
-    .attr("src");
-
-  const title = $(".blog-main article .date")
-    .first()
-    .text();
+  const image = $("article img").first().attr("src");
+  const title = $(".blog-main article .date").first().text();
   const text = $(".blog-main article")
     .toArray()
     .map((article) => {
