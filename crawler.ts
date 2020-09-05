@@ -113,7 +113,8 @@ const import8Sidor = async () => {
   const $ = cheerio.load(body);
 
   const audioUrl = $("audio source").attr("src");
-  if (!audioUrl) throw new Error();
+  // This is empty during weekend
+  if (!audioUrl) return;
 
   const duration = await mp3Duration(await got(audioUrl).buffer());
   const image = $("article img").first().attr("src");
