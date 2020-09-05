@@ -27,6 +27,7 @@ type LingqCreateLessonRequestWithAudio = LingqCreateLessonRequestBase & {
   // Needs to be integer, because LingQ API returns 400 for `duration` with fractions.
   duration: number;
 };
+
 type LingqCreateLessonRequest =
   | LingqCreateLessonRequestBase
   | LingqCreateLessonRequestWithAudio;
@@ -65,10 +66,16 @@ const importSrArticle = async (url: string) => {
     duration: number;
   };
 
-  const text = $(".publication-preamble p, .publication-text p:not(.byline)")
-    .toArray()
-    .map((x) => $(x).text())
-    .join("\n\n");
+  const text = `
+${$(".audio-heading__title .heading").text().trim()}
+
+${$(".publication-metadata__item").text().trim()}
+
+${$(".publication-preamble p, .publication-text p:not(.byline)")
+  .toArray()
+  .map((x) => $(x).text().trim())
+  .join("\n\n")}
+`;
 
   const createLessonRequest: LingqCreateLessonRequest = {
     collection: parseInt(env.COURSE_PK_SRLATT),
@@ -124,14 +131,14 @@ const import8Sidor = async () => {
 
   const duration = await mp3Duration(await got(audioUrl).buffer());
   const image = $("article img").first().attr("src");
-  const title = $(".blog-main article .date").first().text();
+  const title = $(".blog-main article .date").first().text().trim();
   const text = $(".blog-main article")
     .toArray()
     .map((article) => {
       return $(article)
         .find("h2, p:not(.bottom-links)")
         .toArray()
-        .map((textNode) => $(textNode).text())
+        .map((textNode) => $(textNode).text().trim())
         .join("\n\n");
     })
     .join("\n\n======\n\n");
