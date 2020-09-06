@@ -1,5 +1,6 @@
 import got from "got/dist/source";
 import { env } from "./env";
+import { ImportedUrl } from "./entity/ImportedUrl";
 
 type LingqCreateLessonRequestBase = {
   title: string;
@@ -20,24 +21,19 @@ type LingqCreateLessonRequest =
   | LingqCreateLessonRequestBase
   | LingqCreateLessonRequestWithAudio;
 
-export async function lingq(
-  path: "/sv/lessons/",
-  postJson: LingqCreateLessonRequest,
-) {
-  if (path === "/sv/lessons/" && postJson) {
-    console.log(`Importing to LingQ: ${postJson.title}`);
-  }
+export const importToLingq = async (postJson: LingqCreateLessonRequest) => {
+  console.log(`Importing to LingQ: ${postJson.title}`);
 
   if ("duration" in postJson) {
     postJson.duration = Math.ceil(postJson.duration);
   }
 
-  const { body } = await got(`https://www.lingq.com/api/v2${path}`, {
+  await got(`https://www.lingq.com/api/v2/sv/lessons/`, {
     headers: { Authorization: `Token ${env.LINGQ_API_KEY}` },
     responseType: "json",
     method: postJson ? "POST" : "GET",
     json: postJson,
   });
 
-  return body;
-}
+  await ImportedUrl.add(postJson.original_url);
+};

@@ -1,9 +1,10 @@
 import got from "got";
 import cheerio from "cheerio";
-//@ts-ignore
+// @ts-ignore
 import mp3Duration from "mp3-duration";
 import { env } from "../env";
-import { lingq } from "../lingq";
+import { importToLingq } from "../lingq";
+import { ImportedUrl } from "../entity/ImportedUrl";
 
 export const import8Sidor = async () => {
   console.log("Parsing 8 Sidor Lyssna");
@@ -14,6 +15,10 @@ export const import8Sidor = async () => {
   // This is empty during weekend
   if (!audioUrl) {
     console.log("No content today");
+    return;
+  }
+
+  if (await ImportedUrl.has(audioUrl)) {
     return;
   }
 
@@ -31,8 +36,8 @@ export const import8Sidor = async () => {
     })
     .join("\n\n======\n\n");
 
-  await lingq("/sv/lessons/", {
-    collection: parseInt(env.COURSE_PK_8SLYSS),
+  await importToLingq({
+    collection: parseInt(env.COURSE_PK_8SLYSS, 10),
     status: "private",
     title,
     text,

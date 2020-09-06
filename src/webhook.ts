@@ -9,11 +9,7 @@ http
     let success = true;
 
     if (shouldRunCrawler) {
-      try {
-        await crawl();
-      } catch {
-        success = false;
-      }
+      success = await crawl();
     }
 
     res.writeHead(success ? 200 : 500, { "Content-Type": "text/html" });

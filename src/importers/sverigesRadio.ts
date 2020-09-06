@@ -1,7 +1,8 @@
 import got from "got/dist/source";
 import cheerio from "cheerio";
-import { lingq } from "../lingq";
 import { env } from "../env";
+import { filterOutImported } from "../entity/ImportedUrl";
+import { importToLingq } from "../lingq";
 
 const importSrArticle = async (url: string) => {
   console.log(`Parsing: ${url}`);
@@ -33,8 +34,8 @@ ${$(".publication-preamble p, .publication-text p:not(.byline)")
   .join("\n\n")}
 `;
 
-  await lingq("/sv/lessons/", {
-    collection: parseInt(env.COURSE_PK_SRLATT),
+  await importToLingq({
+    collection: parseInt(env.COURSE_PK_SRLATT, 10),
     status: "private",
     title,
     text,
@@ -63,9 +64,11 @@ export const importSrEasySwedishArticles = async () => {
   // For importing the oldest article first
   articlePaths.reverse();
 
-  for (let i = 0; i < articlePaths.length; i++) {
-    console.log(`Importing: ${i + 1}/${articlePaths.length}`);
-    const path = articlePaths[i];
+  const toImport = await filterOutImported(articlePaths);
+
+  for (let i = 0; i < toImport.length; i++) {
+    console.log(`Importing: ${i + 1}/${toImport.length}`);
+    const path = toImport[i];
     await importSrArticle(`https://sverigesradio.se${path}`);
   }
 };

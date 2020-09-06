@@ -1,9 +1,10 @@
-import { config as dotenv } from "dotenv";
+import { config } from "dotenv";
 
-dotenv();
+config();
 
 export const env = { ...process.env } as {
   LINGQ_API_KEY: string;
   COURSE_PK_SRLATT: string;
   COURSE_PK_8SLYSS: string;
+  DATABASE_URL: string;
 };
