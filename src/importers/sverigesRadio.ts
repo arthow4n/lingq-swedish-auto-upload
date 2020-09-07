@@ -7,6 +7,10 @@ import { withoutImported } from "../db/importedUrl";
 const toLingqLesson = async (
   url: string,
 ): Promise<LingqCreateLessonRequest> => {
+  if (!url.startsWith("https://sverigesradio.se/artikel/")) {
+    throw new Error(`Not an article url: ${url}`);
+  }
+
   console.log(`Parsing: ${url}`);
   const { body } = await got(url);
   const $ = cheerio.load(body);
@@ -25,10 +29,16 @@ const toLingqLesson = async (
     duration: number;
   };
 
+  const dateTime = (JSON.parse(
+    $('script[type="application/ld+json"]').text(),
+  ) as { datePublished: string }).datePublished
+    .slice(0, 19)
+    .replace("T", " ");
+
   const text = `
 ${$(".audio-heading__title .heading").text().trim()}
 
-${$(".publication-metadata__item").text().trim()}
+${dateTime}
 
 ${$(".publication-preamble p, .publication-text p:not(.byline)")
   .toArray()
