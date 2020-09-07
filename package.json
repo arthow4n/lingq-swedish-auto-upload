@@ -4,6 +4,7 @@
   "private": true,
   "version": "0.1.0",
   "dependencies": {
+    "@prisma/cli": "^2.6.2",
     "@prisma/client": "^2.6.2",
     "@types/cheerio": "^0.22.21",
     "@types/lodash": "^4.14.161",
@@ -14,12 +15,11 @@
     "ts-node": "^9.0.0",
     "typescript": "^4.0.2"
   },
-  "devDependencies": {
-    "@prisma/cli": "^2.6.2"
-  },
   "scripts": {
     "start": "ts-node src/webhook.ts",
-    "crawl": "ts-node src/crawler.ts"
+    "crawl": "ts-node src/crawler.ts",
+    "migrate": "prisma migrate up --experimental",
+    "migrate:save": "prisma migrate save --experimental"
   },
   "author": {
     "name": "Sheng-han (Aysh) Su",
