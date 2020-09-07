@@ -6,6 +6,7 @@ import { withoutImported } from "../db/importedUrl";
 
 const toLingqLesson = async (
   url: string,
+  envCoursePk: string,
 ): Promise<LingqCreateLessonRequest> => {
   if (!url.startsWith("https://sverigesradio.se/artikel/")) {
     throw new Error(`Not an article url: ${url}`);
@@ -29,9 +30,14 @@ const toLingqLesson = async (
     duration: number;
   };
 
-  const dateTime = (JSON.parse(
-    $('script[type="application/ld+json"]').text(),
-  ) as { datePublished: string }).datePublished
+  const ldJson = $('script[type="application/ld+json"]').html();
+  if (!ldJson) {
+    throw new Error("Missing ld+json");
+  }
+
+  const dateTime = (JSON.parse(ldJson) as {
+    datePublished: string;
+  }).datePublished
     .slice(0, 19)
     .replace("T", " ");
 
@@ -47,7 +53,7 @@ ${$(".publication-preamble p, .publication-text p:not(.byline)")
 `;
 
   const result: LingqCreateLessonRequest = {
-    collection: parseInt(env.COURSE_PK_SRLATT, 10),
+    collection: parseInt(envCoursePk, 10),
     status: "private",
     title,
     text,
@@ -60,14 +66,20 @@ ${$(".publication-preamble p, .publication-text p:not(.byline)")
   return result;
 };
 
-export const importSrEasySwedishArticles = async () => {
-  console.log("Checking articles list: Radio Sweden på lätt svenska");
-  const { body } = await got(
-    "https://sverigesradio.se/radioswedenpalattsvenska",
-  );
-  const $ = cheerio.load(body);
+const articleUrlsToLesson = async (urls: string[], envCoursePk: string) => {
+  const toImport = await withoutImported(urls);
+  const lessons = [];
 
-  const articlePaths = $('div[role="main"] header a')
+  // To slow down crawling
+  for (let i = 0; i < toImport.length; i++) {
+    lessons.push(await toLingqLesson(toImport[i], envCoursePk));
+  }
+
+  return lessons;
+};
+
+const parseArticleUrls = ($: CheerioStatic, selector: string) => {
+  const articlePaths = $(selector)
     .toArray()
     .map((el) => $(el).attr("href") || "")
     // For importing the oldest article first
@@ -77,17 +89,36 @@ export const importSrEasySwedishArticles = async () => {
     throw new Error();
   }
 
-  const articleFullPaths = articlePaths.map(
-    (path) => `https://sverigesradio.se${path}`,
+  return articlePaths.map((path) => `https://sverigesradio.se${path}`);
+};
+
+export const importSrEasySwedishArticles = async () => {
+  console.log("Checking articles list: Radio Sweden på lätt svenska");
+  const { body } = await got(
+    "https://sverigesradio.se/radioswedenpalattsvenska",
+  );
+  const $ = cheerio.load(body);
+
+  const articleUrls = parseArticleUrls(
+    $,
+    'div[role="main"] header a[href^="/artikel"]',
   );
 
-  const toImport = await withoutImported(articleFullPaths);
-  const lessons = [];
+  await importToLingq(
+    await articleUrlsToLesson(articleUrls, env.COURSE_PK_SRLATT),
+  );
+};
 
-  // To slow down crawling
-  for (let i = 0; i < toImport.length; i++) {
-    lessons.push(await toLingqLesson(toImport[i]));
-  }
+export const importSrEkot = async () => {
+  console.log("Checking articles list: Sveriges Radio Ekot Textarkiv");
+  const { body } = await got("https://sverigesradio.se/ekot/textarkiv");
+  const $ = cheerio.load(body);
 
-  await importToLingq(lessons);
+  const articleUrls = parseArticleUrls(
+    $,
+    'h2.heading-link a[href^="/artikel"]',
+  );
+  await importToLingq(
+    await articleUrlsToLesson(articleUrls, env.COURSE_PK_SREKOT),
+  );
 };

@@ -1,10 +1,14 @@
-import { importSrEasySwedishArticles } from "./importers/sverigesRadio";
+import {
+  importSrEasySwedishArticles,
+  importSrEkot,
+} from "./importers/sverigesRadio";
 import { import8Sidor } from "./importers/8sidorLyssna";
 
 export const crawl = async () => {
   try {
-    await import8Sidor();
-    await importSrEasySwedishArticles();
+    // await import8Sidor();
+    // await importSrEasySwedishArticles();
+    await importSrEkot();
     return true;
   } catch (err) {
     console.error(err);
