@@ -1,8 +1,8 @@
 import got from "got/dist/source";
 import cheerio from "cheerio";
 import { env } from "../env";
-import { filterOutImported } from "../entity/ImportedUrl";
 import { importToLingq } from "../lingq";
+import { withoutImported } from "../db/importedUrl";
 
 const importSrArticle = async (url: string) => {
   console.log(`Parsing: ${url}`);
@@ -64,11 +64,12 @@ export const importSrEasySwedishArticles = async () => {
   // For importing the oldest article first
   articlePaths.reverse();
 
-  const toImport = await filterOutImported(articlePaths);
+  const toImport = await withoutImported(
+    articlePaths.map((path) => `https://sverigesradio.se${path}`),
+  );
 
   for (let i = 0; i < toImport.length; i++) {
     console.log(`Importing: ${i + 1}/${toImport.length}`);
-    const path = toImport[i];
-    await importSrArticle(`https://sverigesradio.se${path}`);
+    await importSrArticle(toImport[i]);
   }
 };

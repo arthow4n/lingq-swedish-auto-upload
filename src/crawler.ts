@@ -1,10 +1,8 @@
 import { importSrEasySwedishArticles } from "./importers/sverigesRadio";
 import { import8Sidor } from "./importers/8sidorLyssna";
-import { dbInit } from "./db";
 
 export const crawl = async () => {
   try {
-    await dbInit();
     await import8Sidor();
     await importSrEasySwedishArticles();
     return true;
@@ -15,6 +13,5 @@ export const crawl = async () => {
 };
 
 if (require.main === module) {
-  // tslint:disable-next-line
-  crawl();
+  crawl().then((success) => process.exit(success ? 0 : 1));
 }

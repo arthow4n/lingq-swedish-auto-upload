@@ -1,13 +1,13 @@
 import got from "got/dist/source";
 import { env } from "./env";
-import { ImportedUrl } from "./entity/ImportedUrl";
+import { markAsImported } from "./db/importedUrl";
 
 type LingqCreateLessonRequestBase = {
   title: string;
   text: string;
   status: "private" | "shared";
-  collection?: number;
-  original_url?: string;
+  collection: number;
+  original_url: string;
   external_image?: string;
 };
 
@@ -35,5 +35,5 @@ export const importToLingq = async (postJson: LingqCreateLessonRequest) => {
     json: postJson,
   });
 
-  await ImportedUrl.add(postJson.original_url);
+  await markAsImported(postJson.original_url);
 };

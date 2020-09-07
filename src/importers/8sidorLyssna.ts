@@ -4,7 +4,7 @@ import cheerio from "cheerio";
 import mp3Duration from "mp3-duration";
 import { env } from "../env";
 import { importToLingq } from "../lingq";
-import { ImportedUrl } from "../entity/ImportedUrl";
+import { withoutImported } from "../db/importedUrl";
 
 export const import8Sidor = async () => {
   console.log("Parsing 8 Sidor Lyssna");
@@ -18,7 +18,7 @@ export const import8Sidor = async () => {
     return;
   }
 
-  if (await ImportedUrl.has(audioUrl)) {
+  if (!(await withoutImported([audioUrl])).length) {
     return;
   }
 
