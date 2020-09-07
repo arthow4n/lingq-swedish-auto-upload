@@ -1,6 +1,6 @@
 import got from "got/dist/source";
 import { env } from "./env";
-import { markAsImported } from "./db/importedUrl";
+import { markAsImported, withoutImported } from "./db/importedUrl";
 
 type LingqCreateLessonRequestBase = {
   title: string;
@@ -17,23 +17,46 @@ type LingqCreateLessonRequestWithAudio = LingqCreateLessonRequestBase & {
   duration: number;
 };
 
-type LingqCreateLessonRequest =
+export type LingqCreateLessonRequest =
   | LingqCreateLessonRequestBase
   | LingqCreateLessonRequestWithAudio;
 
-export const importToLingq = async (postJson: LingqCreateLessonRequest) => {
-  console.log(`Importing to LingQ: ${postJson.title}`);
+export const importToLingq = async (payloads: LingqCreateLessonRequest[]) => {
+  const unimportedUrls = await withoutImported(
+    payloads.map((x) => x.original_url),
+  );
 
-  if ("duration" in postJson) {
-    postJson.duration = Math.ceil(postJson.duration);
+  const unimportedPayloads = payloads.filter((x) =>
+    unimportedUrls.includes(x.original_url),
+  );
+
+  if (!unimportedPayloads.length) {
+    console.log("Nothing to import");
+    return;
   }
 
-  await got(`https://www.lingq.com/api/v2/sv/lessons/`, {
-    headers: { Authorization: `Token ${env.LINGQ_API_KEY}` },
-    responseType: "json",
-    method: postJson ? "POST" : "GET",
-    json: postJson,
-  });
+  for (let i = 0; i < unimportedPayloads.length; i++) {
+    const payload = unimportedPayloads[i];
 
-  await markAsImported(postJson.original_url);
+    console.log(
+      `Importing to LingQ ${i + 1}/${unimportedPayloads.length}: ${
+        payload.title
+      }`,
+    );
+
+    if ("duration" in payload) {
+      payload.duration = Math.ceil(payload.duration);
+    }
+
+    await got(`https://www.lingq.com/api/v2/sv/lessons/`, {
+      headers: { Authorization: `Token ${env.LINGQ_API_KEY}` },
+      responseType: "json",
+      method: payload ? "POST" : "GET",
+      json: payload,
+    });
+
+    await markAsImported(payload.original_url);
+  }
+
+  console.log("Done importing");
 };

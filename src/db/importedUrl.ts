@@ -44,3 +44,13 @@ export const withoutImported = async (urls: string[]) => {
 
   return result;
 };
+
+export const checkIsAlreadyImported = async (url: string) => {
+  const existing = await prisma.importedUrls.findOne({
+    where: {
+      url,
+    },
+  });
+
+  return !!existing;
+};

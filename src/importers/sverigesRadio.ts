@@ -1,10 +1,12 @@
 import got from "got/dist/source";
 import cheerio from "cheerio";
 import { env } from "../env";
-import { importToLingq } from "../lingq";
+import { importToLingq, LingqCreateLessonRequest } from "../lingq";
 import { withoutImported } from "../db/importedUrl";
 
-const importSrArticle = async (url: string) => {
+const toLingqLesson = async (
+  url: string,
+): Promise<LingqCreateLessonRequest> => {
   console.log(`Parsing: ${url}`);
   const { body } = await got(url);
   const $ = cheerio.load(body);
@@ -34,7 +36,7 @@ ${$(".publication-preamble p, .publication-text p:not(.byline)")
   .join("\n\n")}
 `;
 
-  await importToLingq({
+  const result: LingqCreateLessonRequest = {
     collection: parseInt(env.COURSE_PK_SRLATT, 10),
     status: "private",
     title,
@@ -43,7 +45,9 @@ ${$(".publication-preamble p, .publication-text p:not(.byline)")
     external_image: image,
     external_audio: audioUrl,
     duration,
-  });
+  };
+
+  return result;
 };
 
 export const importSrEasySwedishArticles = async () => {
@@ -55,21 +59,25 @@ export const importSrEasySwedishArticles = async () => {
 
   const articlePaths = $('div[role="main"] header a')
     .toArray()
-    .map((el) => $(el).attr("href") || "");
+    .map((el) => $(el).attr("href") || "")
+    // For importing the oldest article first
+    .reverse();
 
   if (articlePaths.some((x) => !x)) {
     throw new Error();
   }
 
-  // For importing the oldest article first
-  articlePaths.reverse();
-
-  const toImport = await withoutImported(
-    articlePaths.map((path) => `https://sverigesradio.se${path}`),
+  const articleFullPaths = articlePaths.map(
+    (path) => `https://sverigesradio.se${path}`,
   );
 
+  const toImport = await withoutImported(articleFullPaths);
+  const lessons = [];
+
+  // To slow down crawling
   for (let i = 0; i < toImport.length; i++) {
-    console.log(`Importing: ${i + 1}/${toImport.length}`);
-    await importSrArticle(toImport[i]);
+    lessons.push(await toLingqLesson(toImport[i]));
   }
+
+  await importToLingq(lessons);
 };
