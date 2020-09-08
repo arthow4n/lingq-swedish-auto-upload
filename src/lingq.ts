@@ -2,7 +2,7 @@ import got from "got/dist/source";
 import { env } from "./env";
 import { markAsImported, withoutImported } from "./db/importedUrl";
 
-type LingqCreateLessonRequestBase = {
+export type LingqCreateLessonRequestBase = {
   title: string;
   text: string;
   status: "private" | "shared";
@@ -11,7 +11,7 @@ type LingqCreateLessonRequestBase = {
   external_image?: string;
 };
 
-type LingqCreateLessonRequestWithAudio = LingqCreateLessonRequestBase & {
+export type LingqCreateLessonRequestWithAudio = LingqCreateLessonRequestBase & {
   external_audio: string;
   // Needs to be integer, because LingQ API returns 400 for `duration` with fractions.
   duration: number;

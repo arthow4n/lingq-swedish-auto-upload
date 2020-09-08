@@ -1,7 +1,12 @@
 import got from "got/dist/source";
 import cheerio from "cheerio";
 import { env } from "../env";
-import { importToLingq, LingqCreateLessonRequest } from "../lingq";
+import {
+  importToLingq,
+  LingqCreateLessonRequest,
+  LingqCreateLessonRequestBase,
+  LingqCreateLessonRequestWithAudio,
+} from "../lingq";
 import { withoutImported } from "../db/importedUrl";
 
 const toLingqLesson = async (
@@ -21,14 +26,24 @@ const toLingqLesson = async (
   const audioId = (new URL(url).pathname.match(/\/artikel\/(\d+)/) ?? [])[1];
   if (!audioId) throw new Error();
 
-  const audioMetadataResponse = await got(
-    `https://sverigesradio.se/playerajax/audio?id=${audioId}&type=publication&quality=hi`,
-  ).json();
+  const { audioUrl, duration } = await (async () => {
+    const metaDataResponse = await got(
+      `https://sverigesradio.se/playerajax/audio?id=${audioId}&type=publication&quality=hi`,
+      {
+        throwHttpErrors: false,
+      },
+    );
 
-  const { audioUrl, duration } = audioMetadataResponse as {
-    audioUrl: string;
-    duration: number;
-  };
+    // Some articles doesn't have audio
+    if (metaDataResponse.statusCode === 404) {
+      return { audioUrl: undefined, duration: undefined };
+    }
+
+    return JSON.parse(metaDataResponse.body) as {
+      audioUrl: string;
+      duration: number;
+    };
+  })();
 
   const ldJson = $('script[type="application/ld+json"]').html();
   if (!ldJson) {
@@ -52,18 +67,22 @@ ${$(".publication-preamble p, .publication-text p:not(.byline)")
   .join("\n\n")}
 `;
 
-  const result: LingqCreateLessonRequest = {
+  const result: LingqCreateLessonRequestBase = {
     collection: parseInt(envCoursePk, 10),
     status: "private",
     title,
     text,
     original_url: url,
     external_image: image,
-    external_audio: audioUrl,
-    duration,
   };
 
-  return result;
+  const resultWithAudio: LingqCreateLessonRequestWithAudio = {
+    ...result,
+    external_audio: audioUrl ?? "",
+    duration: duration ?? 0,
+  };
+
+  return audioUrl && duration ? resultWithAudio : result;
 };
 
 const articleUrlsToLesson = async (urls: string[], envCoursePk: string) => {
