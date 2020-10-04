@@ -38,7 +38,7 @@ export const import8Sidor = async () => {
   await importToLingq([
     {
       collection: parseInt(env.COURSE_PK_8SLYSS, 10),
-      status: "private",
+      status: "shared",
       title,
       text,
       original_url: audioUrl,
