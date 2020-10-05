@@ -39,6 +39,7 @@ export const import8Sidor = async () => {
     {
       collection: parseInt(env.COURSE_PK_8SLYSS, 10),
       status: "shared",
+      level: 2,
       title,
       text,
       original_url: audioUrl,

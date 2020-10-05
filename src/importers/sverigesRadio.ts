@@ -6,12 +6,14 @@ import {
   LingqCreateLessonRequest,
   LingqCreateLessonRequestBase,
   LingqCreateLessonRequestWithAudio,
+  LingqCreateLessonRequestLevel,
 } from "../lingq";
 import { withoutImported } from "../db/importedUrl";
 
 const toLingqLesson = async (
   url: string,
   envCoursePk: string,
+  level: LingqCreateLessonRequestLevel,
 ): Promise<LingqCreateLessonRequest> => {
   if (!url.startsWith("https://sverigesradio.se/artikel/")) {
     throw new Error(`Not an article url: ${url}`);
@@ -70,6 +72,7 @@ ${$(".publication-preamble p, .publication-text p:not(.byline)")
   const result: LingqCreateLessonRequestBase = {
     collection: parseInt(envCoursePk, 10),
     status: "shared",
+    level: 3,
     title,
     text,
     original_url: url,
@@ -85,13 +88,17 @@ ${$(".publication-preamble p, .publication-text p:not(.byline)")
   return audioUrl && duration ? resultWithAudio : result;
 };
 
-const articleUrlsToLesson = async (urls: string[], envCoursePk: string) => {
+const articleUrlsToLesson = async (
+  urls: string[],
+  envCoursePk: string,
+  level: LingqCreateLessonRequestLevel,
+) => {
   const toImport = await withoutImported(urls);
   const lessons = [];
 
   // To slow down crawling
   for (let i = 0; i < toImport.length; i++) {
-    lessons.push(await toLingqLesson(toImport[i], envCoursePk));
+    lessons.push(await toLingqLesson(toImport[i], envCoursePk, level));
   }
 
   return lessons;
@@ -124,7 +131,7 @@ export const importSrEasySwedishArticles = async () => {
   );
 
   await importToLingq(
-    await articleUrlsToLesson(articleUrls, env.COURSE_PK_SRLATT),
+    await articleUrlsToLesson(articleUrls, env.COURSE_PK_SRLATT, 2),
   );
 };
 
@@ -138,6 +145,6 @@ export const importSrEkot = async () => {
     'h2.heading-link a[href^="/artikel"]',
   );
   await importToLingq(
-    await articleUrlsToLesson(articleUrls, env.COURSE_PK_SREKOT),
+    await articleUrlsToLesson(articleUrls, env.COURSE_PK_SREKOT, 3),
   );
 };

@@ -2,14 +2,23 @@ import got from "got/dist/source";
 import { env } from "./env";
 import { markAsImported, withoutImported } from "./db/importedUrl";
 
+export type LingqCreateLessonRequestLevel = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
 export type LingqCreateLessonRequestBase = {
   title: string;
   text: string;
-  status: "private" | "shared";
   collection: number;
   original_url: string;
   external_image?: string;
-};
+} & (
+  | {
+      status: "private";
+    }
+  | {
+      status: "shared";
+      level: LingqCreateLessonRequestLevel;
+    }
+);
 
 export type LingqCreateLessonRequestWithAudio = LingqCreateLessonRequestBase & {
   external_audio: string;
