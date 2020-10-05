@@ -76,7 +76,8 @@ ${$(".publication-preamble p, .publication-text p:not(.byline)")
     title,
     text,
     original_url: url,
-    external_image: image,
+    external_image:
+      image ?? "https://sverigesradio.se/dist/apple-touch-icon.png",
   };
 
   const resultWithAudio: LingqCreateLessonRequestWithAudio = {

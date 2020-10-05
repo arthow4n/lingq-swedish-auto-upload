@@ -43,7 +43,9 @@ export const import8Sidor = async () => {
       title,
       text,
       original_url: audioUrl,
-      external_image: image,
+      external_image:
+        image ??
+        "https://8sidor.se/wp-content/themes/8sidor/images/apple-icon-144x144.png",
       external_audio: audioUrl,
       duration,
     },

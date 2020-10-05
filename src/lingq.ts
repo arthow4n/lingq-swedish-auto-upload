@@ -9,14 +9,15 @@ export type LingqCreateLessonRequestBase = {
   text: string;
   collection: number;
   original_url: string;
-  external_image?: string;
 } & (
   | {
       status: "private";
+      external_image?: string;
     }
   | {
       status: "shared";
       level: LingqCreateLessonRequestLevel;
+      external_image: string;
     }
 );
 
