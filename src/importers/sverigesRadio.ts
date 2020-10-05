@@ -72,7 +72,7 @@ ${$(".publication-preamble p, .publication-text p:not(.byline)")
   const result: LingqCreateLessonRequestBase = {
     collection: parseInt(envCoursePk, 10),
     status: "shared",
-    level: 3,
+    level,
     title,
     text,
     original_url: url,
