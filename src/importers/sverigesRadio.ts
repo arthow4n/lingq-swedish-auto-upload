@@ -1,4 +1,3 @@
-import got from "got/dist/source";
 import cheerio from "cheerio";
 import { env } from "../env";
 import {
@@ -9,6 +8,7 @@ import {
   LingqCreateLessonRequestLevel,
 } from "../lingq";
 import { withoutImported } from "../db/importedUrl";
+import { gotEx } from "../httpClient";
 
 const toLingqLesson = async (
   url: string,
@@ -20,7 +20,7 @@ const toLingqLesson = async (
   }
 
   console.log(`Parsing: ${url}`);
-  const { body } = await got(url);
+  const { body } = await gotEx(url);
   const $ = cheerio.load(body);
 
   const title = $("main .audio-heading__title h1").first().text();
@@ -29,7 +29,7 @@ const toLingqLesson = async (
   if (!audioId) throw new Error();
 
   const { audioUrl, duration } = await (async () => {
-    const metaDataResponse = await got(
+    const metaDataResponse = await gotEx(
       `https://sverigesradio.se/playerajax/audio?id=${audioId}&type=publication&quality=hi`,
       {
         throwHttpErrors: false,
@@ -121,7 +121,7 @@ const parseArticleUrls = ($: CheerioStatic, selector: string) => {
 
 export const importSrEasySwedishArticles = async () => {
   console.log("Checking articles list: Radio Sweden på lätt svenska");
-  const { body } = await got(
+  const { body } = await gotEx(
     "https://sverigesradio.se/radioswedenpalattsvenska",
   );
   const $ = cheerio.load(body);
@@ -138,7 +138,7 @@ export const importSrEasySwedishArticles = async () => {
 
 export const importSrEkot = async () => {
   console.log("Checking articles list: Sveriges Radio Ekot Textarkiv");
-  const { body } = await got("https://sverigesradio.se/ekot/textarkiv");
+  const { body } = await gotEx("https://sverigesradio.se/ekot/textarkiv");
   const $ = cheerio.load(body);
 
   const articleUrls = parseArticleUrls(

@@ -1,6 +1,6 @@
-import got from "got/dist/source";
 import { env } from "./env";
 import { markAsImported, withoutImported } from "./db/importedUrl";
+import { gotEx } from "./httpClient";
 
 export type LingqCreateLessonRequestLevel = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -58,25 +58,11 @@ export const importToLingq = async (payloads: LingqCreateLessonRequest[]) => {
       payload.duration = Math.ceil(payload.duration);
     }
 
-    await got(`https://www.lingq.com/api/v2/sv/lessons/`, {
+    await gotEx(`https://www.lingq.com/api/v2/sv/lessons/`, {
       headers: { Authorization: `Token ${env.LINGQ_API_KEY}` },
       responseType: "json",
       method: payload ? "POST" : "GET",
       json: payload,
-      hooks: {
-        beforeError: [
-          (error) => {
-            console.error(`
-===
-Error when calling: ${error.request?.requestUrl}
----
-${JSON.stringify(error.response?.body, null, 2)}
-===
-`);
-            return error;
-          },
-        ],
-      },
     });
     await markAsImported(payload.original_url);
   }

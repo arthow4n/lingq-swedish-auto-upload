@@ -1,14 +1,14 @@
-import got from "got";
 import cheerio from "cheerio";
 // @ts-ignore
 import mp3Duration from "mp3-duration";
 import { env } from "../env";
 import { importToLingq } from "../lingq";
 import { checkIsAlreadyImported } from "../db/importedUrl";
+import { gotEx } from "../httpClient";
 
 export const import8Sidor = async () => {
   console.log("Parsing 8 Sidor Lyssna");
-  const { body } = await got("https://8sidor.se/kategori/lyssna/");
+  const { body } = await gotEx("https://8sidor.se/kategori/lyssna/");
   const $ = cheerio.load(body);
 
   const audioUrl = $("audio source").attr("src");
@@ -21,7 +21,7 @@ export const import8Sidor = async () => {
     return;
   }
 
-  const duration = await mp3Duration(await got(audioUrl).buffer());
+  const duration = await mp3Duration(await gotEx(audioUrl).buffer());
   const image = $("article img").first().attr("src");
   const title = $(".blog-main article .date").first().text().trim();
   const text = $(".blog-main article")
