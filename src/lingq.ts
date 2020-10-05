@@ -53,8 +53,21 @@ export const importToLingq = async (payloads: LingqCreateLessonRequest[]) => {
       responseType: "json",
       method: payload ? "POST" : "GET",
       json: payload,
+      hooks: {
+        beforeError: [
+          (error) => {
+            console.error(`
+===
+Error when calling: ${error.request?.requestUrl}
+---
+${JSON.stringify(error.response?.body, null, 2)}
+===
+`);
+            return error;
+          },
+        ],
+      },
     });
-
     await markAsImported(payload.original_url);
   }
 
