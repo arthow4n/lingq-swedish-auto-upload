@@ -19,7 +19,8 @@
     "start": "ts-node src/webhook.ts",
     "crawl": "ts-node src/crawler.ts",
     "migrate": "prisma migrate up --experimental",
-    "migrate:save": "prisma migrate save --experimental"
+    "migrate:save": "prisma migrate save --experimental",
+    "heroku-postbuild": "prisma generate"
   },
   "author": {
     "name": "Sheng-han (Aysh) Su",
