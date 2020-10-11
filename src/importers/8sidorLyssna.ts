@@ -2,22 +2,25 @@ import cheerio from "cheerio";
 // @ts-ignore
 import mp3Duration from "mp3-duration";
 import { env } from "../env";
-import { importToLingq } from "../lingq";
+import { importToLingq, LingqCreateLessonRequest } from "../lingq";
 import { withoutImported } from "../db/importedUrl";
 import { gotEx } from "../httpClient";
+import { compact } from "lodash";
 
 /**
  * Searching previous days than just today to catch some failed import caused by unknown reason
  * @returns articleUrlWithDate[]
  */
-const create8sidorLyssnaUrlsWithDate = (): string[] => {
+const createUrlsWithDate = (): string[] => {
   const dates = [-3, -2, -1, 0].map((days) =>
     new Date(Date.now() + 86400000 * days).toISOString().slice(0, 10),
   );
   return dates.map((date) => `https://8sidor.se/kategori/lyssna/?date=${date}`);
 };
 
-const upload8Sidor = async (articleUrlWithDate: string) => {
+const articleUrlsToLesson = async (
+  articleUrlWithDate: string,
+): Promise<LingqCreateLessonRequest | null> => {
   console.log(`Parsing 8 Sidor Lyssna: ${articleUrlWithDate}`);
   const { body } = await gotEx(articleUrlWithDate);
   const $ = cheerio.load(body);
@@ -27,7 +30,7 @@ const upload8Sidor = async (articleUrlWithDate: string) => {
     // Might be empty if there's no content for that day, e.g. weekend or late upload
     !audioUrl
   ) {
-    return;
+    return null;
   }
 
   const duration = await mp3Duration(await gotEx(audioUrl).buffer());
@@ -44,27 +47,30 @@ const upload8Sidor = async (articleUrlWithDate: string) => {
     })
     .join("\n\n======\n\n");
 
-  await importToLingq([
-    {
-      collection: parseInt(env.COURSE_PK_8SLYSS, 10),
-      status: "shared",
-      level: 2,
-      title,
-      text,
-      original_url: articleUrlWithDate.toString(),
-      external_image:
-        image ??
-        "https://8sidor.se/wp-content/themes/8sidor/images/apple-icon-144x144.png",
-      external_audio: audioUrl,
-      duration,
-    },
-  ]);
+  const lesson: LingqCreateLessonRequest = {
+    collection: parseInt(env.COURSE_PK_8SLYSS, 10),
+    status: "shared",
+    level: 2,
+    title,
+    text,
+    original_url: articleUrlWithDate.toString(),
+    external_image:
+      image ??
+      "https://8sidor.se/wp-content/themes/8sidor/images/apple-icon-144x144.png",
+    external_audio: audioUrl,
+    duration,
+  };
+
+  return lesson;
 };
 
 export const import8Sidor = async () => {
-  const urls = await withoutImported(create8sidorLyssnaUrlsWithDate());
+  const urls = await withoutImported(createUrlsWithDate());
 
+  const lessons: (LingqCreateLessonRequest | null)[] = [];
   for (const articleUrlWithDate of urls) {
-    await upload8Sidor(articleUrlWithDate);
+    lessons.push(await articleUrlsToLesson(articleUrlWithDate));
   }
+
+  await importToLingq(compact(lessons));
 };
