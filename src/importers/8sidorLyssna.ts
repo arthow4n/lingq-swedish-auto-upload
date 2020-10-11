@@ -3,27 +3,36 @@ import cheerio from "cheerio";
 import mp3Duration from "mp3-duration";
 import { env } from "../env";
 import { importToLingq } from "../lingq";
-import { checkIsAlreadyImported } from "../db/importedUrl";
+import { checkIsAlreadyImported, withoutImported } from "../db/importedUrl";
 import { gotEx } from "../httpClient";
 
-export const import8Sidor = async () => {
-  console.log("Parsing 8 Sidor Lyssna");
-  const { body } = await gotEx("https://8sidor.se/kategori/lyssna/");
+/**
+ * Searching previous days than just today to catch some failed import caused by unknown reason
+ * @returns articleUrlWithDate[]
+ */
+const create8sidorLyssnaUrlsWithDate = (): string[] => {
+  const dates = [-3, -2, -1, 0].map((days) =>
+    new Date(Date.now() + 86400000 * days).toISOString().slice(0, 10),
+  );
+  return dates.map((date) => `https://8sidor.se/kategori/lyssna/?date=${date}`);
+};
+
+const upload8Sidor = async (articleUrlWithDate: string) => {
+  console.log(`Parsing 8 Sidor Lyssna: ${articleUrlWithDate}`);
+  const { body } = await gotEx(articleUrlWithDate);
   const $ = cheerio.load(body);
 
   const audioUrl = $("audio source").attr("src");
   if (
-    // This is empty during weekend
-    !audioUrl ||
-    (await checkIsAlreadyImported(audioUrl))
+    // Might be empty if there's no content for that day, e.g. weekend or late upload
+    !audioUrl
   ) {
-    console.log("No new content today");
     return;
   }
 
   const duration = await mp3Duration(await gotEx(audioUrl).buffer());
   const image = $("article img").first().attr("src");
-  const title = $(".blog-main article .date").first().text().trim();
+  const title = new URL(articleUrlWithDate).searchParams.get("date") ?? "";
   const text = $(".blog-main article")
     .toArray()
     .map((article) => {
@@ -42,7 +51,7 @@ export const import8Sidor = async () => {
       level: 2,
       title,
       text,
-      original_url: audioUrl,
+      original_url: articleUrlWithDate.toString(),
       external_image:
         image ??
         "https://8sidor.se/wp-content/themes/8sidor/images/apple-icon-144x144.png",
@@ -50,4 +59,12 @@ export const import8Sidor = async () => {
       duration,
     },
   ]);
+};
+
+export const import8Sidor = async () => {
+  const urls = await withoutImported(create8sidorLyssnaUrlsWithDate());
+
+  for (const articleUrlWithDate of urls) {
+    await upload8Sidor(articleUrlWithDate);
+  }
 };
