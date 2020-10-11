@@ -3,7 +3,7 @@ import cheerio from "cheerio";
 import mp3Duration from "mp3-duration";
 import { env } from "../env";
 import { importToLingq } from "../lingq";
-import { checkIsAlreadyImported, withoutImported } from "../db/importedUrl";
+import { withoutImported } from "../db/importedUrl";
 import { gotEx } from "../httpClient";
 
 /**

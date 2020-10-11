@@ -3,6 +3,10 @@
   "license": "MIT",
   "private": true,
   "version": "0.1.0",
+  "engines": {
+    "//": "https://github.com/prisma/prisma-client-js/issues/907",
+    "node": "12.18.x"
+  },
   "dependencies": {
     "@prisma/cli": "^2.6.2",
     "@prisma/client": "^2.6.2",
