@@ -63,7 +63,9 @@ ${$(".audio-heading__title .heading").text().trim()}
 
 ${dateTime}
 
-${$(".publication-preamble p, .publication-text p:not(.byline)")
+${$(
+  ".publication-preamble ul li, .publication-preamble p, .publication-text p:not(.byline)",
+)
   .toArray()
   .map((x) => $(x).text().trim())
   .join("\n\n")}
