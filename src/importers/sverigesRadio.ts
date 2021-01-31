@@ -102,7 +102,7 @@ const articleUrlsToLesson = async (
   const lessons = [];
 
   // To slow down crawling
-  for (let i = 0; i < toImport.length; i++) {
+  for (let i = toImport.length - 1; i >= 0; i--) {
     lessons.push(await toLingqLesson(toImport[i], envCoursePk, level));
   }
 
