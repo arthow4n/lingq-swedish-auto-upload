@@ -46,7 +46,7 @@ export const withoutImported = async (urls: string[]) => {
 };
 
 export const checkIsAlreadyImported = async (url: string) => {
-  const existing = await prisma.importedUrls.findOne({
+  const existing = await prisma.importedUrls.findFirst({
     where: {
       url,
     },

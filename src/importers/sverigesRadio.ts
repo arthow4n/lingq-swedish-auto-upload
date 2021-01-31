@@ -109,7 +109,7 @@ const articleUrlsToLesson = async (
   return lessons;
 };
 
-const parseArticleUrls = ($: CheerioStatic, selector: string) => {
+const parseArticleUrls = ($: cheerio.Root, selector: string) => {
   const articlePaths = $(selector)
     .toArray()
     .map((el) => $(el).attr("href") || "")
