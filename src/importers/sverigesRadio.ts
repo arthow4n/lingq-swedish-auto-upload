@@ -25,8 +25,10 @@ const toLingqLesson = async (
 
   const title = $("main .audio-heading__title h1").first().text();
   const image = $("main figure img").first().attr("src");
-  const audioId = (new URL(url).pathname.match(/\/artikel\/(\d+)/) ?? [])[1];
-  if (!audioId) throw new Error();
+  const audioId = $(".article-details [data-audio-id]").first().data("audioId");
+  if (!audioId) {
+    throw new Error("Missing audioId");
+  }
 
   const { audioUrl, duration } = await (async () => {
     const metaDataResponse = await gotEx(
